@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>けんちゃんすごろく - ドキドキ衝突版</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- ヘッダー -->
+        <header class="game-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <h1>けんちゃんすごろく</h1>
+                    <h2>ドキドキ衝突版</h2>
+                </div>
+                <div class="turn-info">
+                    <span>ターン: <strong id="turnNumber">0</strong></span>
+                    <span>現在: <strong id="currentPlayer">-</strong></span>
+                    <div class="stat-item">
+                        <span class="stat-label">BGM:</span>
+                        <span class="status status--info" id="bgmStatus">停止中</span>
+                    </div>
+                </div>
+                <div class="game-controls">
+                    <button class="btn btn--primary" id="startBtn">ゲーム開始</button>
+                    <button class="btn btn--outline" id="resetBtn" style="display: none;">リセット</button>
+                    <button class="btn btn--secondary btn--sm" id="settingsBtn" title="設定">⚙️</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ゲームボード -->
+        <main class="game-board">
+            <div class="squares-container" id="squaresContainer">
+                <!-- JavaScriptで動的に生成 -->
+            </div>
+        </main>
+
+        <!-- サイドバー -->
+        <aside class="sidebar">
+            <!-- プレイヤー情報 -->
+            <div class="players-info">
+                <div class="player-card" id="player-ken">
+                    <div class="player-avatar" style="background-color: #4285F4;">け</div>
+                    <div class="player-details">
+                        <h4>けんちゃん</h4>
+                        <div class="player-stats">
+                            <span>位置: <span class="position">0</span></span>
+                            <span>平均: <span class="average">0</span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="player-card" id="player-papa">
+                    <div class="player-avatar" style="background-color: #EA4335;">パ</div>
+                    <div class="player-details">
+                        <h4>パパ</h4>
+                        <div class="player-stats">
+                            <span>位置: <span class="position">0</span></span>
+                            <span>平均: <span class="average">0</span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="player-card" id="player-mama">
+                    <div class="player-avatar" style="background-color: #34A853;">マ</div>
+                    <div class="player-details">
+                        <h4>ママ</h4>
+                        <div class="player-stats">
+                            <span>位置: <span class="position">0</span></span>
+                            <span>平均: <span class="average">0</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- サイコロエリア -->
+            <div class="dice-area">
+                <div class="dice-container">
+                    <div class="dice" id="dice">
+                        <div class="dice-face">?</div>
+                    </div>
+                    <button class="btn btn--primary btn--lg" id="rollDiceBtn" disabled>サイコロを振る (Space)</button>
+                    <div class="dice-result" id="diceResult" style="display: none;">
+                        <span id="diceValue">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- イベントログ -->
+            <div class="event-log">
+                <h3>イベントログ</h3>
+                <div class="log-container" id="logContainer">
+                    <p class="log-entry">ゲーム開始を待っています...</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ミステリーボックスルーレット -->
+        <div class="modal hidden" id="mysteryBoxModal">
+            <div class="modal-content">
+                <h3>🎁 ミステリーボックス！</h3>
+                <div class="roulette-container">
+                    <div class="roulette" id="roulette">
+                        <div class="roulette-item" data-effect="+5">ロケット！<br>5マス進む</div>
+                        <div class="roulette-item" data-effect="start">悲劇…<br>スタートに戻る</div>
+                        <div class="roulette-item" data-effect="steal_steps">全員から<br>1マス吸収</div>
+                        <div class="roulette-item" data-effect="swap_last">最下位と<br>場所を交換</div>
+                        <div class="roulette-item" data-effect="skip_3">超絶お昼寝<br>3回休み</div>
+                        <div class="roulette-item" data-effect="warp_28">ゴール直前へ<br>ワープ！</div>
+                    </div>
+                    <div class="roulette-pointer"></div>
+                </div>
+                <div class="mystery-result" id="mysteryResult" style="display: none;">
+                    <h4>結果: <span id="mysteryEffectText">-</span></h4>
+                    <button class="btn btn--primary" id="applyMysteryBtn">適用 (Space)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 勝利モーダル -->
+        <div class="modal hidden" id="winModal">
+            <div class="modal-content win-modal">
+                <div class="fireworks" id="fireworks"></div>
+                <h2>🎉 おめでとう！ 🎉</h2>
+                <div class="winner-info">
+                    <div class="winner-avatar" id="winnerAvatar"></div>
+                    <h3 id="winnerName">-</h3>
+                    <p>勝利者です！</p>
+                </div>
+                <div class="final-stats" id="finalStats">
+                    <!-- ゲーム終了時の統計 -->
+                </div>
+                <button class="btn btn--primary btn--lg" id="playAgainBtn">もう一度プレイ (Space)</button>
+            </div>
+        </div>
+
+        <!-- 設定モーダル -->
+        <div class="modal hidden" id="settingsModal">
+            <div class="modal-content">
+                <h3>⚙️ ゲーム設定</h3>
+                <div class="setting-item">
+                    <label class="form-label">
+                        <input type="checkbox" id="bgmToggle" checked> BGM
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label class="form-label">
+                        <input type="checkbox" id="seToggle" checked> 効果音
+                    </label>
+                </div>
+                <div class="setting-item">
+                    <label class="form-label">音量</label>
+                    <input type="range" class="form-control" id="volumeSlider" min="0" max="100" value="50">
+                </div>
+                <button class="btn btn--primary" id="closeSettingsBtn">閉じる (Space)</button>
+            </div>
+        </div>
+
+        <!-- 衝突演出用 -->
+        <div class="collision-effects" id="collisionEffects">
+            <div class="explosion"></div>
+        </div>
+    </div>
+
+    <!-- 音声要素 -->
+    <audio id="bgm1" loop preload="auto"><source src="audio/music1.mp3" type="audio/mpeg"></audio>
+    <audio id="bgm2" loop preload="auto"><source src="audio/music2.mp3" type="audio/mpeg"></audio>
+    <audio id="normalRoll" preload="auto"><source src="audio/effects/normal-roll.mp3" type="audio/mpeg"></audio>
+    <audio id="highRoll" preload="auto"><source src="audio/effects/high-roll.mp3" type="audio/mpeg"></audio>
+    <audio id="lowRoll" preload="auto"><source src="audio/effects/low-roll.mp3" type="audio/mpeg"></audio>
+    <audio id="criticalHit" preload="auto"><source src="audio/effects/critical-hit.mp3" type="audio/mpeg"></audio>
+    <audio id="move" preload="auto"><source src="audio/effects/move.mp3" type="audio/mpeg"></audio>
+    <audio id="collision" preload="auto"><source src="audio/effects/collision.mp3" type="audio/mpeg"></audio>
+    <audio id="returnStart" preload="auto"><source src="audio/effects/return-start.mp3" type="audio/mpeg"></audio>
+    <audio id="mysteryBox" preload="auto"><source src="audio/effects/mystery-box.mp3" type="audio/mpeg"></audio>
+    <audio id="rocket" preload="auto"><source src="audio/effects/rocket.mp3" type="audio/mpeg"></audio>
+    <audio id="sad" preload="auto"><source src="audio/effects/sad.mp3" type="audio/mpeg"></audio>
+    <audio id="lucky" preload="auto"><source src="audio/effects/lucky.mp3" type="audio/mpeg"></audio>
+    <audio id="sleep" preload="auto"><source src="audio/effects/sleep.mp3" type="audio/mpeg"></audio>
+    <audio id="wind" preload="auto"><source src="audio/effects/wind.mp3" type="audio/mpeg"></audio>
+    <audio id="swap" preload="auto"><source src="audio/effects/swap.mp3" type="audio/mpeg"></audio>
+    <audio id="bomb" preload="auto"><source src="audio/effects/bomb.mp3" type="audio/mpeg"></audio>
+    <audio id="money" preload="auto"><source src="audio/effects/money.mp3" type="audio/mpeg"></audio>
+    <audio id="blackhole" preload="auto"><source src="audio/effects/blackhole.mp3" type="audio/mpeg"></audio>
+    <audio id="storm" preload="auto"><source src="audio/effects/storm.mp3" type="audio/mpeg"></audio>
+    <audio id="fortune" preload="auto"><source src="audio/effects/fortune.mp3" type="audio/mpeg"></audio>
+    <audio id="tragedy" preload="auto"><source src="audio/effects/tragedy.mp3" type="audio/mpeg"></audio>
+    <audio id="win" preload="auto"><source src="audio/effects/win.mp3" type="audio/mpeg"></audio>
+    <audio id="firework" preload="auto"><source src="audio/effects/firework.mp3" type="audio/mpeg"></audio>
+    <audio id="anticipation" preload="auto"><source src="audio/effects/anticipation.mp3" type="audio/mpeg"></audio>
+    <audio id="doubleBonus" preload="auto"><source src="audio/effects/double-bonus.mp3" type="audio/mpeg"></audio>
+
+    <script src="app.js"></script>
+</body>
+</html>
