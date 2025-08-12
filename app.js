@@ -2,20 +2,21 @@
 class SugorokuGame {
     constructor() {
         this.players = [
-            { name: 'けんちゃん', color: '#4285F4', position: 0, id: 'ken', avatar: 'け', totalRolls: 0, totalValue: 0, skips: 0, doubleNext: false },
-            { name: 'パパ', color: '#EA4335', position: 0, id: 'papa', avatar: 'パ', totalRolls: 0, totalValue: 0, skips: 0, doubleNext: false },
-            { name: 'ママ', color: '#34A853', position: 0, id: 'mama', avatar: 'マ', totalRolls: 0, totalValue: 0, skips: 0, doubleNext: false }
+            { name: 'けんちゃん', color: '#4285F4', position: 0, id: 'ken', avatarImg: 'images/ken.png', totalRolls: 0, totalValue: 0, skips: 0, doubleNext: false },
+            { name: 'パパ', color: '#EA4335', position: 0, id: 'papa', avatarImg: 'images/papa.png', totalRolls: 0, totalValue: 0, skips: 0, doubleNext: false },
+            { name: 'ママ', color: '#34A853', position: 0, id: 'mama', avatarImg: 'images/mama.png', totalRolls: 0, totalValue: 0, skips: 0, doubleNext: false }
         ];
         
         this.boardSize = 36;
+        this.endGameTriggerPos = this.boardSize - 10; // BGM変更のトリガーとなる位置
         this.currentPlayerIndex = 0;
         this.gameStarted = false;
         this.gameEnded = false;
+        this.isEndGameBGM = false; // 終盤BGMが再生中かどうかのフラグ
         this.turnNumber = 0;
         this.consecutiveHighRolls = 0;
         this.currentMysteryEffect = null;
-        this.isProcessing = false;
-        this.isEndGameBgmActive = false; // BGM切り替えフラグ
+        this.isProcessing = false; // アクション中の多重操作防止フラグ
         
         this.mysteryBoxPositions = [4, 8, 13, 16, 19, 22, 25, 27, 29, 31, 33, 35];
         this.gimmickSquares = {
@@ -100,8 +101,6 @@ class SugorokuGame {
             const createPiece = (player) => {
                 const piece = document.createElement('div');
                 piece.className = `player-piece ${player.id}`;
-                piece.style.backgroundColor = player.color;
-                piece.textContent = player.avatar;
                 return piece;
             };
 
@@ -135,7 +134,7 @@ class SugorokuGame {
             
             const mysteryModal = document.getElementById('mysteryBoxModal');
             if (!mysteryModal.classList.contains('hidden') && document.getElementById('mysteryResult').style.display !== 'none') {
-                if (this.isProcessing) return; // ルーレット回転中は無視
+                if (this.isProcessing) return;
                 document.getElementById('applyMysteryBtn').click(); return;
             }
             const winModal = document.getElementById('winModal');
@@ -148,7 +147,7 @@ class SugorokuGame {
             }
             const rollDiceBtn = document.getElementById('rollDiceBtn');
             if (!rollDiceBtn.disabled) {
-                 if (this.isProcessing) return; // 処理中は無視
+                 if (this.isProcessing) return;
                  rollDiceBtn.click();
             }
         });
@@ -168,30 +167,31 @@ class SugorokuGame {
         Object.values(this.sounds).forEach(sound => sound.volume = this.volume);
     }
     
-    updateBGM() {
-        if (!this.audioEnabled.bgm || !this.gameStarted || this.gameEnded) {
-            this.currentBGM?.pause();
-            this.currentBGM = null;
-            document.getElementById('bgmStatus').textContent = '停止中';
+    updateBGM(forceChange = false) {
+        if (this.currentBGM && !forceChange) {
+            if (this.audioEnabled.bgm && this.currentBGM.paused) {
+                this.currentBGM.play().catch(e => console.log('BGM再生エラー:', e));
+            } else if (!this.audioEnabled.bgm) {
+                this.currentBGM.pause();
+            }
             return;
         }
 
-        if (!this.isEndGameBgmActive && this.players.some(p => p.position >= 30)) {
-            this.isEndGameBgmActive = true;
-        }
-
-        const targetBgm = this.isEndGameBgmActive ? this.bgm2 : this.bgm1;
-
-        if (this.currentBGM !== targetBgm) {
-            this.currentBGM?.pause();
-            this.currentBGM = targetBgm;
-            this.currentBGM.currentTime = 0;
-            this.currentBGM.play().catch(e => console.log('BGM再生エラー:', e));
-        } else if (this.currentBGM && this.currentBGM.paused) {
-            this.currentBGM.play().catch(e => console.log('BGM再生エラー:', e));
+        if (this.currentBGM) {
+            this.currentBGM.pause();
+            this.currentBGM = null;
         }
         
-        document.getElementById('bgmStatus').textContent = this.isEndGameBgmActive ? '終盤' : '通常';
+        if (!this.audioEnabled.bgm || !this.gameStarted || this.gameEnded) {
+            document.getElementById('bgmStatus').textContent = '停止中';
+            return;
+        }
+        
+        const bgm = this.isEndGameBGM ? this.bgm2 : this.bgm1;
+        bgm.currentTime = 0;
+        bgm.play().catch(e => console.log('BGM再生エラー:', e));
+        this.currentBGM = bgm;
+        document.getElementById('bgmStatus').textContent = this.isEndGameBGM ? '終盤' : '通常';
     }
     
     playSound(soundName) {
@@ -203,18 +203,19 @@ class SugorokuGame {
     startGame() {
         this.gameStarted = true;
         this.turnNumber = 1;
+        this.isEndGameBGM = false;
         document.getElementById('startBtn').style.display = 'none';
         document.getElementById('resetBtn').style.display = 'inline-block';
         document.getElementById('rollDiceBtn').disabled = false;
-        this.updateBGM();
+        this.updateBGM(true); // 強制的に最初のBGMを再生
         this.updateUI();
         this.addLog('ゲームが始まりました！けんちゃんからスタートです。', 'important');
     }
     
     resetGame() {
         this.gameStarted = false; this.gameEnded = false; this.isProcessing = false;
-        this.isEndGameBgmActive = false; // BGMフラグをリセット
         this.currentPlayerIndex = 0; this.turnNumber = 0; this.consecutiveHighRolls = 0;
+        this.isEndGameBGM = false;
         this.players.forEach(p => { p.position = 0; p.totalRolls = 0; p.totalValue = 0; p.skips = 0; p.doubleNext = false; });
         
         document.getElementById('startBtn').style.display = 'inline-block';
@@ -224,11 +225,10 @@ class SugorokuGame {
         
         ['winModal', 'mysteryBoxModal', 'settingsModal'].forEach(id => document.getElementById(id).classList.add('hidden'));
         
-        this.currentBGM?.pause();
-        this.currentBGM = null;
-        document.getElementById('bgmStatus').textContent = '停止中';
+        if (this.currentBGM) { this.currentBGM.pause(); this.currentBGM = null; }
         
         this.updatePlayerPieces(); this.updateUI(); this.clearLog(); this.addLog('ゲーム開始を待っています...');
+        document.getElementById('bgmStatus').textContent = '停止中';
     }
     
     async rollDice() {
@@ -294,10 +294,14 @@ class SugorokuGame {
     }
 
     async checkSquareEvents(player) {
-        // BGMの状態を更新
-        this.updateBGM();
-
         const pos = player.position;
+        
+        // BGM切り替え判定
+        if (!this.isEndGameBGM && pos >= this.endGameTriggerPos) {
+            this.isEndGameBGM = true;
+            this.updateBGM(true); // 強制的に終盤BGMに切り替え
+        }
+        
         if (pos === this.boardSize) { this.endGame(player); return; }
         
         const playersInSameSquare = this.players.filter(p => p.position === pos && p !== player);
@@ -306,7 +310,6 @@ class SugorokuGame {
         if (this.gimmickSquares[pos]) { await this.handleGimmick(player, pos); return; }
         if (this.mysteryBoxPositions.includes(pos)) { this.openMysteryBox(player); return; }
         
-        // どのイベントにも該当しなかった場合、次のターンへ進む
         this.nextTurn();
     }
     
@@ -353,7 +356,7 @@ class SugorokuGame {
                 this.addLog(`${player.name}はもう一度サイコロを振れます！`);
                 this.isProcessing = false;
                 document.getElementById('rollDiceBtn').disabled = false;
-                return; // ターンを進めない
+                return;
             case 'skip': player.skips++; this.addLog(`${player.name}は次回1回休み。`); break;
             case 'swap': await this.swapPlayerPositions(player); break;
             case 'start': player.position = 0; this.addLog(`${player.name}はスタートへ。`); break;
@@ -363,7 +366,7 @@ class SugorokuGame {
             case 'random_big':
                 await this.movePlayerByEffect(player, Math.random() < 0.5 ? 3 : -3);
                 shouldContinueTurn = true; break;
-            default: // +n, -n
+            default:
                 await this.movePlayerByEffect(player, parseInt(gimmick.effect));
                 shouldContinueTurn = true; break;
         }
@@ -372,7 +375,7 @@ class SugorokuGame {
         if (this.gameEnded) return;
 
         if (shouldContinueTurn) {
-             await this.checkSquareEvents(player); // ギミック移動後もイベントチェック
+             await this.checkSquareEvents(player);
         } else {
              this.nextTurn();
         }
@@ -401,18 +404,12 @@ class SugorokuGame {
     }
     
     openMysteryBox(player) {
-        this.isProcessing = true; // ルーレット回転中は他の操作を禁止
+        this.isProcessing = true;
         this.playSound('mysteryBox'); this.addLog(`${player.name}がミステリーボックスを発見！`, 'important');
         
         const modal = document.getElementById('mysteryBoxModal');
-        const rouletteContainer = document.querySelector('.roulette-container');
         const roulette = document.getElementById('roulette');
-        const rouletteItems = roulette.querySelectorAll('.roulette-item');
         const resultEl = document.getElementById('mysteryResult');
-        
-        // 前回の結果表示スタイルをクリア
-        rouletteContainer.classList.remove('result-decided');
-        rouletteItems.forEach(item => item.classList.remove('highlighted'));
         
         resultEl.style.display = 'none';
         roulette.style.transition = 'none';
@@ -427,20 +424,10 @@ class SugorokuGame {
             setTimeout(() => {
                 const effectIndex = Math.floor((finalRotation % 360) / 60);
                 const effect = this.mysteryBoxEffects[effectIndex];
-
-                // 結果表示用のスタイルを適用
-                rouletteContainer.classList.add('result-decided');
-                const winnerItem = rouletteItems[effectIndex];
-                winnerItem.classList.add('highlighted');
-                // アニメーション用にカスタムプロパティを設定
-                const itemRotation = 60 * effectIndex;
-                winnerItem.style.setProperty('--rotation-angle', `${itemRotation}deg`);
-
-
                 document.getElementById('mysteryEffectText').textContent = effect.name;
                 resultEl.style.display = 'block';
                 this.currentMysteryEffect = { player, effect };
-                this.isProcessing = false; // 結果表示後、操作可能に
+                this.isProcessing = false;
             }, 3000);
         }, 100);
     }
@@ -496,7 +483,7 @@ class SugorokuGame {
                 this.addLog(`${player.name}はもう一度サイコロを振れます！`);
                 this.isProcessing = false;
                 document.getElementById('rollDiceBtn').disabled = false;
-                return; // ターンを進めない
+                return;
         }
         
         this.updatePlayerPieces();
@@ -527,8 +514,9 @@ class SugorokuGame {
         this.addLog(`${winner.name}がゴール！勝利です！🎉`, 'important');
         
         const modal = document.getElementById('winModal');
-        document.getElementById('winnerAvatar').style.backgroundColor = winner.color;
-        document.getElementById('winnerAvatar').textContent = winner.avatar;
+        const winnerAvatar = document.getElementById('winnerAvatar');
+        winnerAvatar.style.backgroundImage = `url(${winner.avatarImg})`;
+        winnerAvatar.style.borderColor = winner.color;
         document.getElementById('winnerName').textContent = winner.name;
         
         let statsHTML = '<h4>ゲーム統計</h4>';
