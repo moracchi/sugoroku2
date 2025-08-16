@@ -243,7 +243,7 @@
   --color-info: var(--color-gray-300);
   --color-focus-ring: rgba(var(--color-teal-300-rgb), 0.4);
   --color-btn-primary-text: var(--color-slate-900);
-  --color-card-border: rgba(var(--color-gray-400-rgb), 0.15);
+  --color-card-border: rgba(var(--color-gray-400-rgb), 0.2);
   --color-card-border-inner: rgba(var(--color-gray-400-rgb), 0.15);
   --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.1),
     inset 0 -1px 0 rgba(0, 0, 0, 0.15);
@@ -432,6 +432,7 @@ select.form-control { padding: var(--space-8) var(--space-12); -webkit-appearanc
   justify-content: center;
   align-items: center;
   overflow: hidden;
+  position: relative;
 }
 
 .squares-container {
@@ -467,8 +468,6 @@ select.form-control { padding: var(--space-8) var(--space-12); -webkit-appearanc
 .square.gimmick { background: var(--color-bg-2); border-color: var(--color-warning); }
 .square-number { font-weight: var(--font-weight-bold); margin-bottom: var(--space-4); font-size: var(--font-size-base); }
 .square-title { font-size: var(--font-size-xs); color: var(--color-text-secondary); line-height: 1.2; padding: 0 var(--space-2); }
-.square.highlight { border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-focus-ring); animation: pulse 1s infinite; }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 
 /* プレイヤーコマ */
 .player-piece {
@@ -476,41 +475,47 @@ select.form-control { padding: var(--space-8) var(--space-12); -webkit-appearanc
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 48px; /* サイズを大きく */
-  height: 48px; /* サイズを大きく */
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background-size: cover;
-  background-position: center;
-  background-color: var(--color-white); /* 画像読み込み中の背景色 */
   border: 2px solid var(--color-white);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
   z-index: 10;
-  transition: all var(--duration-normal) var(--ease-standard);
+  transition: transform 0.2s ease-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.player-piece.ken { background-image: url(images/ken.png); border-color: #4285F4;}
-.player-piece.papa { background-image: url(images/papa.png); border-color: #EA4335;}
-.player-piece.mama { background-image: url(images/mama.png); border-color: #34A853;}
+.player-piece.moving {
+  animation: jump 0.2s ease-out;
+}
 
-.player-piece.moving { animation: bounce 0.5s ease-in-out; }
-@keyframes bounce { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.2); } }
+@keyframes jump {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -80%) scale(1.1); }
+}
 
 /* 複数プレイヤーコマ */
 .square .player-pieces-multiple {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-4);
+  gap: var(--space-2);
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 80px; /* コマが重ならないように */
+  width: 60px; /* コマが重ならないように */
 }
 .square .player-pieces-multiple .player-piece {
   position: static;
   transform: none;
-  width: 36px; /* 複数時のサイズ */
-  height: 36px; /* 複数時のサイズ */
+  width: 28px;
+  height: 28px;
+  font-size: var(--font-size-md);
 }
 
 /* サイドバー */
@@ -541,6 +546,7 @@ select.form-control { padding: var(--space-8) var(--space-12); -webkit-appearanc
   align-items: center;
   gap: var(--space-12);
   transition: all var(--duration-normal) var(--ease-standard);
+  position: relative;
 }
 
 .player-card.active {
@@ -548,20 +554,41 @@ select.form-control { padding: var(--space-8) var(--space-12); -webkit-appearanc
   background-color: var(--color-bg-1);
 }
 
+.player-card.reach {
+  border-color: var(--color-red-400);
+  animation: reach-pulse 1.5s infinite;
+}
+.player-card.reach::after {
+  content: 'リーチ！';
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: var(--color-red-400);
+  color: var(--color-white);
+  padding: var(--space-2) var(--space-6);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: bold;
+}
+@keyframes reach-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(var(--color-red-400-rgb), 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(var(--color-red-400-rgb), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--color-red-400-rgb), 0); }
+}
+
+
 .player-avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-size: cover;
-  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-white);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
   flex-shrink: 0;
-  border: 2px solid var(--color-white);
 }
-
-.player-card#player-ken .player-avatar { background-image: url(images/ken.png); border-color: #4285F4;}
-.player-card#player-papa .player-avatar { background-image: url(images/papa.png); border-color: #EA4335;}
-.player-card#player-mama .player-avatar { background-image: url(images/mama.png); border-color: #34A853;}
-
 
 .player-details h4 { margin: 0 0 var(--space-4) 0; font-size: var(--font-size-base); }
 .player-stats { display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
@@ -575,30 +602,51 @@ select.form-control { padding: var(--space-8) var(--space-12); -webkit-appearanc
   text-align: center;
 }
 
-.dice-container { display: flex; flex-direction: column; align-items: center; gap: var(--space-16); }
-.dice {
+.dice-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-24);
+}
+.scene {
   width: 100px;
   height: 100px;
-  background: var(--color-surface);
+  perspective: 400px;
+}
+.cube {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transform: translateZ(-50px);
+  transition: transform 1s;
+}
+.cube.rolling {
+  animation: roll 1s ease-in-out;
+}
+.cube__face {
+  position: absolute;
+  width: 100px;
+  height: 100px;
   border: 2px solid var(--color-border);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 60px;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text);
-  transition: all var(--duration-normal) var(--ease-standard);
-  box-shadow: var(--shadow-md);
+  background-color: var(--color-surface); /* 背景色を追加 */
+  backface-visibility: hidden; /* 裏面を非表示にする */
+  box-sizing: border-box;
+  background-size: 80px 80px;
+  background-position: center;
+  background-repeat: no-repeat;
 }
-.dice.rolling { animation: roll 1s ease-in-out; }
-@keyframes roll {
-  0% { transform: rotate(0deg) scale(1); }
-  25% { transform: rotate(90deg) scale(1.1); }
-  50% { transform: rotate(180deg) scale(1.2); }
-  75% { transform: rotate(270deg) scale(1.1); }
-  100% { transform: rotate(360deg) scale(1); }
-}
+/* SVGのfillを#000に指定して黒色を明確化 */
+.cube__face--front  { transform: rotateY(  0deg) translateZ(50px); background-image: url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='50' cy='50' r='10' fill='%23000'/%3e%3c/svg%3e"); }
+.cube__face--back   { transform: rotateY(180deg) translateZ(50px); background-image: url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='25' cy='25' r='10' fill='%23000'/%3e%3ccircle cx='25' cy='50' r='10' fill='%23000'/%3e%3ccircle cx='25' cy='75' r='10' fill='%23000'/%3e%3ccircle cx='75' cy='25' r='10' fill='%23000'/%3e%3ccircle cx='75' cy='50' r='10' fill='%23000'/%3e%3ccircle cx='75' cy='75' r='10' fill='%23000'/%3e%3c/svg%3e"); }
+.cube__face--right  { transform: rotateY( 90deg) translateZ(50px); background-image: url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='25' cy='25' r='10' fill='%23000'/%3e%3ccircle cx='75' cy='75' r='10' fill='%23000'/%3e%3c/svg%3e"); }
+.cube__face--left   { transform: rotateY(-90deg) translateZ(50px); background-image: url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='25' cy='25' r='10' fill='%23000'/%3e%3ccircle cx='25' cy='75' r='10' fill='%23000'/%3e%3ccircle cx='75' cy='25' r='10' fill='%23000'/%3e%3ccircle cx='75' cy='75' r='10' fill='%23000'/%3e%3ccircle cx='50' cy='50' r='10' fill='%23000'/%3e%3c/svg%3e"); }
+.cube__face--top    { transform: rotateX( 90deg) translateZ(50px); background-image: url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='25' cy='25' r='10' fill='%23000'/%3e%3ccircle cx='25' cy='75' r='10' fill='%23000'/%3e%3ccircle cx='75' cy='25' r='10' fill='%23000'/%3e%3ccircle cx='75' cy='75' r='10' fill='%23000'/%3e%3c/svg%3e"); }
+.cube__face--bottom { transform: rotateX(-90deg) translateZ(50px); background-image: url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='25' cy='25' r='10' fill='%23000'/%3e%3ccircle cx='50' cy='50' r='10' fill='%23000'/%3e%3ccircle cx='75' cy='75' r='10' fill='%23000'/%3e%3c/svg%3e"); }
+
+
+@keyframes roll { 100% { transform: translateZ(-50px) rotateX(1440deg) rotateY(2160deg); } }
+
 .dice-result { background: var(--color-bg-3); padding: var(--space-8) var(--space-16); border-radius: var(--radius-base); border: 1px solid var(--color-success); }
 .dice-result #diceValue { font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--color-success); }
 
@@ -649,18 +697,12 @@ select.form-control { padding: var(--space-8) var(--space-12); -webkit-appearanc
 .fireworks::after { top: 20%; right: 20%; animation-delay: 1s; }
 @keyframes firework { 0% { transform: scale(0) rotate(0deg); opacity: 1; } 50% { transform: scale(1.5) rotate(180deg); opacity: 0.8; } 100% { transform: scale(0) rotate(360deg); opacity: 0; } }
 .winner-info { margin: var(--space-24) 0; }
-.winner-avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    margin: 0 auto var(--space-16);
-    background-size: cover;
-    background-position: center;
-    border: 3px solid var(--color-white);
-}
+.winner-avatar { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto var(--space-16); display: flex; align-items: center; justify-content: center; color: var(--color-white); font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); }
 .final-stats { background: var(--color-surface); border-radius: var(--radius-base); padding: var(--space-16); margin: var(--space-16) 0; text-align: left; }
-.final-stats h4 { margin-bottom: var(--space-8); text-align: center; }
-.stat-row { display: flex; justify-content: space-between; margin-bottom: var(--space-4); font-size: var(--font-size-sm); }
+.final-stats h4 { margin-bottom: var(--space-16); text-align: center; }
+.final-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8) var(--space-16); font-size: var(--font-size-sm); }
+.stat-label { color: var(--color-text-secondary); }
+.stat-value { font-weight: var(--font-weight-medium); text-align: right; }
 
 /* 設定モーダル */
 .setting-item { margin-bottom: var(--space-16); text-align: left; }
@@ -673,6 +715,18 @@ select.form-control { padding: var(--space-8) var(--space-12); -webkit-appearanc
 .explosion { position: absolute; width: 100px; height: 100px; background: radial-gradient(circle, rgba(255, 255, 0, 0.8) 0%, rgba(255, 165, 0, 0.6) 50%, transparent 100%); border-radius: 50%; transform: scale(0); opacity: 0; }
 .explosion.active { animation: explode 0.8s ease-out; }
 @keyframes explode { 0% { transform: scale(0); opacity: 1; } 50% { transform: scale(2); opacity: 0.8; } 100% { transform: scale(3); opacity: 0; } }
+
+/* 移動予測ハイライト */
+.prediction-highlight {
+  position: absolute;
+  border: 3px dashed var(--color-primary);
+  border-radius: var(--radius-base);
+  box-sizing: border-box;
+  z-index: 5;
+  transition: all 0.2s ease-in-out;
+  pointer-events: none;
+}
+.hidden { display: none; }
 
 /* レスポンシブデザイン */
 @media (max-width: 1200px) {
@@ -730,9 +784,11 @@ select.form-control { padding: var(--space-8) var(--space-12); -webkit-appearanc
   .player-piece {
     width: 24px;
     height: 24px;
+    font-size: var(--font-size-sm);
   }
   .square .player-pieces-multiple .player-piece {
     width: 20px;
     height: 20px;
+    font-size: var(--font-size-xs);
   }
 }

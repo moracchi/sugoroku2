@@ -36,6 +36,7 @@
             <div class="squares-container" id="squaresContainer">
                 <!-- JavaScriptで動的に生成 -->
             </div>
+            <div id="prediction-highlight" class="prediction-highlight hidden"></div>
         </main>
 
         <!-- サイドバー -->
@@ -43,7 +44,7 @@
             <!-- プレイヤー情報 -->
             <div class="players-info">
                 <div class="player-card" id="player-ken">
-                    <div class="player-avatar"></div>
+                    <div class="player-avatar" style="background-color: #4285F4;">け</div>
                     <div class="player-details">
                         <h4>けんちゃん</h4>
                         <div class="player-stats">
@@ -53,7 +54,7 @@
                     </div>
                 </div>
                 <div class="player-card" id="player-papa">
-                    <div class="player-avatar"></div>
+                    <div class="player-avatar" style="background-color: #EA4335;">パ</div>
                     <div class="player-details">
                         <h4>パパ</h4>
                         <div class="player-stats">
@@ -63,7 +64,7 @@
                     </div>
                 </div>
                 <div class="player-card" id="player-mama">
-                    <div class="player-avatar"></div>
+                    <div class="player-avatar" style="background-color: #34A853;">マ</div>
                     <div class="player-details">
                         <h4>ママ</h4>
                         <div class="player-stats">
@@ -77,12 +78,19 @@
             <!-- サイコロエリア -->
             <div class="dice-area">
                 <div class="dice-container">
-                    <div class="dice" id="dice">
-                        <div class="dice-face">?</div>
+                    <div class="scene">
+                        <div class="cube" id="diceCube">
+                            <div class="cube__face cube__face--front"></div>
+                            <div class="cube__face cube__face--back"></div>
+                            <div class="cube__face cube__face--right"></div>
+                            <div class="cube__face cube__face--left"></div>
+                            <div class="cube__face cube__face--top"></div>
+                            <div class="cube__face cube__face--bottom"></div>
+                        </div>
                     </div>
                     <button class="btn btn--primary btn--lg" id="rollDiceBtn" disabled>サイコロを振る (Space)</button>
                     <div class="dice-result" id="diceResult" style="display: none;">
-                        <span id="diceValue">-</span>
+                        出目: <span id="diceValue">-</span>
                     </div>
                 </div>
             </div>
@@ -190,6 +198,7 @@
     <audio id="firework" preload="auto"><source src="audio/effects/firework.mp3" type="audio/mpeg"></audio>
     <audio id="anticipation" preload="auto"><source src="audio/effects/anticipation.mp3" type="audio/mpeg"></audio>
     <audio id="doubleBonus" preload="auto"><source src="audio/effects/double-bonus.mp3" type="audio/mpeg"></audio>
+    <audio id="reach" preload="auto"><source src="audio/effects/reach.mp3" type="audio/mpeg"></audio>
 
     <script src="app.js"></script>
 </body>
